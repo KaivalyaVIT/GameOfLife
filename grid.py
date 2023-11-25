@@ -1,50 +1,74 @@
+# Simulation of Conway's Game of Life by - Kaivalya Sao
+
 import pygame
 import numpy as np
 
-col_about_to_die = (200, 200, 225)
-col_alive = (255, 255, 215)
-col_background = (10, 10, 40)
-col_grid = (30, 30, 60)
+# Define colors
+color_about_to_die = (200, 200, 225)
+color_alive = (255, 255, 215)
+color_background = (10, 10, 40)
+color_grid = (30, 30, 60)
 
-def update(surface, cur, sz):
-    nxt = np.zeros((cur.shape[0], cur.shape[1]))
+def update(surface, current_state, cell_size):
+    # Create a new empty grid for the next state
+    next_state = np.zeros((current_state.shape[0], current_state.shape[1]))
 
-    for r, c in np.ndindex(cur.shape):
-        num_alive = np.sum(cur[r-1:r+2, c-1:c+2]) - cur[r, c]
+    # Iterate over each cell in the current state
+    for row, col in np.ndindex(current_state.shape):
+        # Count the number of alive neighbors
+        num_alive = np.sum(current_state[row-1:row+2, col-1:col+2]) - current_state[row, col]
 
-        if cur[r, c] == 1 and num_alive < 2 or num_alive > 3:
-            col = col_about_to_die
-        elif (cur[r, c] == 1 and 2 <= num_alive <= 3) or (cur[r, c] == 0 and num_alive == 3):
-            nxt[r, c] = 1
-            col = col_alive
+        # Apply the rules of the Game of Life to determine the next state of the cell
+        if current_state[row, col] == 1 and (num_alive < 2 or num_alive > 3):
+            cell_color = color_about_to_die
+        elif (current_state[row, col] == 1 and 2 <= num_alive <= 3) or (current_state[row, col] == 0 and num_alive == 3):
+            next_state[row, col] = 1
+            cell_color = color_alive
+        else:
+            cell_color = color_background
 
-        col = col if cur[r, c] == 1 else col_background
-        pygame.draw.rect(surface, col, (c*sz, r*sz, sz-1, sz-1))
+        # Draw the cell on the surface
+        pygame.draw.rect(surface, cell_color, (col*cell_size, row*cell_size, cell_size-1, cell_size-1))
 
-    return nxt
+    return next_state
 
-def init(dimx, dimy):
-    cells = np.zeros((dimy, dimx))
-    pattern = np.array([[1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,1,1],
-                        [0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,1,1],
-                        [1,1,1,0,0,0,0,0,1,0,0,0,1,1,0,1,0,1,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,1,1,0,0,1],
-                        [1,0,0,1,0,0,1,1,1,0,0,1,0,0,0,1,0,0,0,0,1,1,0,0,0,1,0,0,0,1,0,0,1,0,1,1,0,0,0],
-                        [1,1,0,0,0,0,0,1,1,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,1,1,0,0,0,0,1,1,1,1,0,0,0,0],
-                        [1,1,0,0,1,0,0,1,1,0,1,0,0,0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,1,0,0,1,0,0,1,0,0,0,0],
-                        [0,0,0,1,1,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,1,0,0,1,0,0,0,0,0,0,0],
-                        [0,0,0,0,1,0,0,0,1,1,1,1,0,0,0,1,0,1,1,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,0,0,0,0],
-                        [1,1,1,0,0,0,1,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0]]);
+def initialize(dim_x, dim_y):
+    # Create an empty grid of cells
+    cells = np.zeros((dim_y, dim_x))
 
-    pos = (dimy//2,(dimx//2)-10)
-    cells[pos[0]:pos[0]+pattern.shape[0], pos[1]:pos[1]+pattern.shape[1]] = pattern
+    # Define a pattern to initialize some cells
+    # pattern = np.array([[1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,1,1],
+    #                     [0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,1,1],
+    #                     [1,1,1,0,0,0,0,0,1,0,0,0,1,1,0,1,0,1,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,1,1,0,0,1],
+    #                     [1,0,0,1,0,0,1,1,1,0,0,1,0,0,0,1,0,0,0,0,1,1,0,0,0,1,0,0,0,1,0,0,1,0,1,1,0,0,0],
+    #                     [1,1,0,0,0,0,0,1,1,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,1,1,0,0,0,0,1,1,1,1,0,0,0,0],
+    #                     [1,1,0,0,1,0,0,1,1,0,1,0,0,0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,1,0,0,1,0,0,1,0,0,0,0],
+    #                     [0,0,0,1,1,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,1,0,0,1,0,0,0,0,0,0,0],
+    #                     [0,0,0,0,1,0,0,0,1,1,1,1,0,0,0,1,0,1,1,1,0,0,0,0,0,0,1,0,1,1,1,1,0,0,0,0,0,0,0],
+    #                     [1,1,1,0,0,0,1,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0]])
+
+    pattern = np.array([[0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,1,0,0,0,0,1,0,1,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,1,1,0,1,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0],
+                        [0,0,0,1,0,0,1,0,0,0,0,1,0,1,0,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0],
+                        [1,1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [1,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                        [0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]);
+
+    # Position the pattern in the center of the grid
+    position = (dim_y // 2, (dim_x // 2) - 10)
+    cells[position[0]:position[0]+pattern.shape[0], position[1]:position[1]+pattern.shape[1]] = pattern
+
     return cells
 
-def main(dimx, dimy, cellsize):
+def main(dim_x, dim_y, cell_size):
     pygame.init()
-    surface = pygame.display.set_mode((dimx * cellsize, dimy * cellsize))
+    surface = pygame.display.set_mode((dim_x * cell_size, dim_y * cell_size))
     pygame.display.set_caption("Game of Life")
 
-    cells = init(dimx, dimy)
+    cells = initialize(dim_x, dim_y)
 
     while True:
         for event in pygame.event.get():
@@ -52,8 +76,8 @@ def main(dimx, dimy, cellsize):
                 pygame.quit()
                 return
 
-        surface.fill(col_grid)
-        cells = update(surface, cells, cellsize)
+        surface.fill(color_grid)
+        cells = update(surface, cells, cell_size)
         pygame.display.update()
 
 if __name__ == "__main__":
